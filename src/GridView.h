@@ -10,6 +10,8 @@
 #include <List.h>
 #include <FileGameSound.h>
 
+#include "LightsOutSolver.h"
+
 #include "TwoStateDrawButton.h"
 #include "Grid.h"
 #include "PuzzlePack.h"
@@ -48,11 +50,13 @@ private:
 	BMenu *fMenu, *fSoundMenu, *fRandomMenu, *fPackMenu, *fLevelMenu;
 	BStringView *fLevelLabel, *fMovesLabel;
 
+	LightsOutSolver** fSolvers;
+
 	Grid *fGrid;
 	PuzzlePack *fPuzzle;
 
 	bool fUseSound;
-	int8 fDimension, fLevel, fMoveCount, fCurrentCount;
+	int8 fDimension, fLevel, fMoveCount, fCurrentCount, fHintIndex;
 	uint64 fPuzzleValues, fGridValues;
 	std::vector<int8> fMoves;
 

@@ -31,9 +31,10 @@ enum
 PuzzlePackSet gPuzzles;
 
 static const float gridMargin = 50;
+static const int8 defaultDimension = 5;
 static const int8 minDimension = 3;
 static const int8 maxDimension = 8;
-static const int8 defaultDimension = 5;
+static const int8 numDimensions = maxDimension - minDimension + 1;
 static const int8 maxNumButtons = maxDimension * maxDimension;
 
 /*
@@ -45,7 +46,7 @@ static const int8 maxNumButtons = maxDimension * maxDimension;
  */
 static const int8 maxLevels[] = { 8, 7, 15, 35, 48, 63 };
 
-static int8 lastLevels[maxDimension - minDimension + 1];
+static int8 lastLevels[numDimensions];
 
 static void
 LoadSoundFile(BFileGameSound*& sound, const char* file)
@@ -81,7 +82,8 @@ GridView::GridView()
 	fPuzzle(NULL),
 	fClickSound(NULL),
 	fWinSound(NULL),
-	fNoWinSound(NULL)
+	fNoWinSound(NULL),
+	fHintIndex(-1)
 {
 	SetViewColor(0,0,50);
 	
@@ -174,6 +176,11 @@ GridView::GridView()
 		SetPack(fPuzzle);
 	else
 		SetRandom(fDimension);
+
+	fSolvers = new LightsOutSolver*[numDimensions];
+
+	for (int index = 0; index < numDimensions; index++)
+		fSolvers[index] = NULL;
 }
 
 GridView::~GridView()
@@ -186,6 +193,11 @@ GridView::~GridView()
 	delete fGrid;
 
 	delete[] fButtons;
+
+	for (int index = 0; index < numDimensions; index++)
+		delete fSolvers[index];
+
+	delete[] fSolvers;
 }
 
 void GridView::AttachedToWindow()
@@ -335,6 +347,19 @@ void GridView::KeyDown(const char* bytes, int32 numBytes)
 		case B_END:
 			Restore();
 			break;
+		case 'h':
+		case 'H':
+		{
+			LightsOutSolver*& solver = fSolvers[fDimension - minDimension];
+			if (solver == NULL)
+				solver = new LightsOutSolver(fDimension);
+			fHintIndex = solver->Hint((const ColumnVector&) fGrid->GetGrid());
+			if (fHintIndex >= 0)
+				fButtons[fHintIndex]->SetValue(B_CONTROL_ON);
+			else
+				fHintIndex = -1;
+			break;
+		}
 		default:
 			BView::KeyDown(bytes, numBytes);
 			return;
@@ -432,6 +457,9 @@ void GridView::PressButton(int8 index)
 
 	if (index < n * (n - 1))	// not bottom row
 		FlipButton(index + n);	// neighbor below
+
+	if (fHintIndex >= 0)
+		fButtons[fHintIndex]->SetValue(B_CONTROL_OFF);
 }
 
 void GridView::FlipButton(int8 offset)
@@ -574,6 +602,9 @@ void GridView::SetLevel(int8 level)
 
 void GridView::UpdateButtons()
 {
+	if (fHintIndex >= 0)
+		fButtons[fHintIndex]->SetValue(B_CONTROL_OFF);
+
 	for (int8 index = 0; index < fDimension * fDimension; index++)
 		fButtons[index]->SetState(fGrid->ValueAt(index));
 }
@@ -637,7 +668,7 @@ void GridView::Success()
 void GridView::StartupPreferences()
 {
 	if (LoadPreferences(PREFERENCES_PATH) == B_OK) {
-		for (int8 index = 0; index <= maxDimension - minDimension; index++)
+		for (int8 index = 0; index < numDimensions; index++)
 			lastLevels[index] = preferences.GetInt8("levels", index, index + 1);
 
 		for(int8 index = 0; index < gPuzzles.CountPacks(); index++) {
@@ -666,7 +697,7 @@ void GridView::StartupPreferences()
 
 		fUseSound = preferences.GetBool("usesound", true);
 	} else {
-		for (int8 index = 0; index <= maxDimension - minDimension; index++)
+		for (int8 index = 0; index < numDimensions; index++)
 			lastLevels[index] = index + 1;
 
 		fPuzzle = gPuzzles.PackAt(0);
@@ -683,7 +714,7 @@ void GridView::ShutdownPreferences()
 {
 	preferences.MakeEmpty();
 	
-	for (int8 index = 0; index <= maxDimension - minDimension; index++)
+	for (int8 index = 0; index < numDimensions; index++)
 		preferences.AddInt8("levels", lastLevels[index]);
 
 	// Save the progress in each of the puzzle packs

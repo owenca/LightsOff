@@ -102,12 +102,12 @@ void Grid::Random(int8 minMoves)
 		}
 }
 
-bool Grid::ValueAt(int8 x, int8 y)
+bool Grid::ValueAt(int8 x, int8 y) const
 {
 	return fData[x + y * fDimension];
 }
 
-bool Grid::ValueAt(int8 offset)
+bool Grid::ValueAt(int8 offset) const
 {
 	return fData[offset];
 }
@@ -128,7 +128,7 @@ void Grid::SetGridValues(uint64 value)
 		fData[i] = (value & (uint64) 1 << i) != 0;
 }
 
-uint64 Grid::GetGridValues()
+uint64 Grid::GetGridValues() const
 {
 	uint64 values = 0;
 
@@ -137,6 +137,11 @@ uint64 Grid::GetGridValues()
 			values |= (uint64) 1 << i;
 
 	return values;
+}
+
+const grid& Grid::GetGrid() const
+{
+	return fData;
 }
 
 void Grid::FlipValueAt(int8 x, int8 y)

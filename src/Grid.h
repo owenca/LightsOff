@@ -18,12 +18,13 @@ public:
 	void Random(int8 minMoves);
 	void FlipValueAt(int8 x, int8 y);
 	void FlipValueAt(int8 offset);
-	bool ValueAt(int8 x, int8 y);
-	bool ValueAt(int8 offset);
+	bool ValueAt(int8 x, int8 y) const;
+	bool ValueAt(int8 offset) const;
 	void SetValue(int8 offset, bool isOn);
 	void SetValue(int8 x, int8 y, bool isOn);
 	void SetGridValues(uint64 value);
-	uint64 GetGridValues();
+	uint64 GetGridValues() const;
+	const grid& GetGrid() const;
 
 private:
 	int8 fDimension;
